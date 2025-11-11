@@ -1,0 +1,1031 @@
+FILTER EXTRACTION TEST RESULTS
+====================================================================================================
+
+
+QUERY 1:
+I am looking for product having sku:PXS01-BK
+
+STATUS: success
+
+RESPONSE:
+filters = models.Filter(
+    must=[
+        models.FieldCondition(
+            key="SKU",
+            match=models.MatchValue(value="PXS01-BK"),
+        ),
+    ],
+    should=[],
+    must_not=[],
+)
+
+----------------------------------------------------------------------------------------------------
+
+QUERY 2:
+can you provide me the bathtub of ribel company?
+
+STATUS: success
+
+RESPONSE:
+filters = models.Filter(
+    must=[
+        models.FieldCondition(
+            key="Brand",
+            match=models.MatchValue(value="Riobel"),
+        ),
+        models.FieldCondition(
+            key="Product_Category",
+            match=models.MatchValue(value="BATHTUBS & SHOWERS"),
+        ),
+    ],
+    should=[],
+    must_not=[],
+)
+
+----------------------------------------------------------------------------------------------------
+
+QUERY 3:
+can you provide me non black color bathtubs?
+
+STATUS: success
+
+RESPONSE:
+filters = models.Filter(
+    must=[
+        models.FieldCondition(
+            key="Product_Category",
+            match=models.MatchValue(value="BATHTUBS & SHOWERS"),
+        ),
+    ],
+    should=[],
+    must_not=[
+        models.FieldCondition(
+            key="Primary_Color",
+            match=models.MatchValue(value="Black"),
+        ),
+    ],
+)
+
+----------------------------------------------------------------------------------------------------
+
+QUERY 4:
+can you provide me the bathtub of ribel and aura company? and it should of black or gray color only
+
+STATUS: success
+
+RESPONSE:
+filters = models.Filter(
+    must=[
+        models.FieldCondition(
+            key="Product_Category",
+            match=models.MatchValue(value="BATHTUBS & SHOWERS"),
+        ),
+        models.Filter(
+            should=[
+                models.FieldCondition(
+                    key="Brand",
+                    match=models.MatchValue(value="Riobel"),
+                ),
+                models.FieldCondition(
+                    key="Brand",
+                    match=models.MatchValue(value="Aura"),
+                ),
+            ]
+        ),
+        models.Filter(
+            should=[
+                models.FieldCondition(
+                    key="Primary_Color",
+                    match=models.MatchValue(value="Black"),
+                ),
+                models.FieldCondition(
+                    key="Primary_Color",
+                    match=models.MatchValue(value="Gray"),
+                ),
+            ]
+        ),
+    ],
+    should=[
+        models.FieldCondition(
+            key="Secondary_Color",
+            match=models.MatchValue(value="Black"),
+        ),
+        models.FieldCondition(
+            key="Secondary_Color",
+            match=models.MatchValue(value="Gray"),
+        ),
+    ],
+    must_not=[],
+)
+
+----------------------------------------------------------------------------------------------------
+
+QUERY 5:
+can you provide me the black color faucets under 400 and also can you provide white color faucets under 799
+
+STATUS: success
+
+RESPONSE:
+filters = models.Filter(
+    must=[
+        models.FieldCondition(
+            key="Product_Category",
+            match=models.MatchValue(value="BATHROOM FAUCETS"),
+        ),
+    ],
+    should=[
+        # Group 1: Black faucets under 400
+        models.Filter(
+            must=[
+                models.FieldCondition(
+                    key="Primary_Color",
+                    match=models.MatchValue(value="Black"),
+                ),
+                models.FieldCondition(
+                    key="Price",
+                    range=models.Range(lt=400),
+                ),
+            ],
+            should=[
+                models.FieldCondition(
+                    key="Secondary_Color",
+                    match=models.MatchValue(value="Black"),
+                ),
+            ],
+            must_not=[],
+        ),
+        # Group 2: White faucets under 799
+        models.Filter(
+            must=[
+                models.FieldCondition(
+                    key="Primary_Color",
+                    match=models.MatchValue(value="White"),
+                ),
+                models.FieldCondition(
+                    key="Price",
+                    range=models.Range(lt=799),
+                ),
+            ],
+            should=[
+                models.FieldCondition(
+                    key="Secondary_Color",
+                    match=models.MatchValue(value="White"),
+                ),
+            ],
+            must_not=[],
+        ),
+    ],
+    must_not=[],
+)
+
+----------------------------------------------------------------------------------------------------
+
+QUERY 6:
+can you provide me the taps of ribel and aura company? and it should of black or gray color only
+
+STATUS: success
+
+RESPONSE:
+filters = models.Filter(
+    must=[
+        models.FieldCondition(
+            key="Product_Category",
+            match=models.MatchValue(value="BATHROOM FAUCETS"),
+        ),
+        models.Filter(
+            should=[
+                models.FieldCondition(
+                    key="Brand",
+                    match=models.MatchValue(value="Riobel"),
+                ),
+                models.FieldCondition(
+                    key="Brand",
+                    match=models.MatchValue(value="aura"),
+                ),
+            ]
+        ),
+        models.Filter(
+            should=[
+                models.FieldCondition(
+                    key="Primary_Color",
+                    match=models.MatchValue(value="Black"),
+                ),
+                models.FieldCondition(
+                    key="Primary_Color",
+                    match=models.MatchValue(value="Gray"),
+                ),
+            ]
+        ),
+    ],
+    should=[
+        models.FieldCondition(
+            key="Secondary_Color",
+            match=models.MatchValue(value="Black"),
+        ),
+        models.FieldCondition(
+            key="Secondary_Color",
+            match=models.MatchValue(value="Gray"),
+        ),
+    ],
+    must_not=[],
+)
+
+----------------------------------------------------------------------------------------------------
+
+QUERY 7:
+black vannity
+
+STATUS: success
+
+RESPONSE:
+filters = models.Filter(
+    must=[
+        models.FieldCondition(
+            key="Product_Category",
+            match=models.MatchValue(value="BATHROOM VANITIES & SINKS"),
+        ),
+        models.FieldCondition(
+            key="Primary_Color",
+            match=models.MatchValue(value="Black"),
+        ),
+    ],
+    should=[
+        models.FieldCondition(
+            key="Secondary_Color",
+            match=models.MatchValue(value="Black"),
+        )
+    ],
+    must_not=[],
+)
+
+----------------------------------------------------------------------------------------------------
+
+QUERY 8:
+I am looking for a vanity that is 22" wide
+
+STATUS: success
+
+RESPONSE:
+filters = models.Filter(
+    must=[
+        models.FieldCondition(
+            key="Product_Category",
+            match=models.MatchValue(value="BATHROOM VANITIES & SINKS"),
+        ),
+        models.FieldCondition(
+            key="Size_Width",
+            range=models.Range(gte=22.0, lte=22.0),
+        ),
+        models.FieldCondition(
+            key="Size_Unit",
+            match=models.MatchValue(value="in"),
+        ),
+    ],
+    should=[],
+    must_not=[],
+)
+
+----------------------------------------------------------------------------------------------------
+
+QUERY 9:
+wall light
+
+STATUS: success
+
+RESPONSE:
+filters = models.Filter(
+    must=[
+        models.FieldCondition(
+            key="Product_Category",
+            match=models.MatchValue(value="LIGHTING"),
+        ),
+        models.FieldCondition(
+            key="Installation_Type",
+            match=models.MatchValue(value="wall"),
+        ),
+    ],
+    should=[],
+    must_not=[],
+)
+
+----------------------------------------------------------------------------------------------------
+
+QUERY 10:
+can you provide me the commode of toto company? and it should of white color only
+
+STATUS: success
+
+RESPONSE:
+filters = models.Filter(
+    must=[
+        models.FieldCondition(
+            key="Brand",
+            match=models.MatchValue(value="Toto"),
+        ),
+        models.FieldCondition(
+            key="Product_Category",
+            match=models.MatchValue(value="TOILETS & BIDETS"),
+        ),
+        models.FieldCondition(
+            key="Primary_Color",
+            match=models.MatchValue(value="White"),
+        ),
+    ],
+    should=[
+        models.FieldCondition(
+            key="Secondary_Color",
+            match=models.MatchValue(value="White"),
+        )
+    ],
+    must_not=[],
+)
+
+----------------------------------------------------------------------------------------------------
+
+QUERY 11:
+i am looking for freestanding bathtub under 2000$
+
+STATUS: success
+
+RESPONSE:
+filters = models.Filter(
+    must=[
+        models.FieldCondition(
+            key="Product_Category",
+            match=models.MatchValue(value="BATHTUBS & SHOWERS"),
+        ),
+        models.FieldCondition(
+            key="Installation_Type",
+            match=models.MatchValue(value="free-standing"),
+        ),
+        models.FieldCondition(
+            key="Price",
+            range=models.Range(lt=2000.0),
+        ),
+    ],
+    should=[],
+    must_not=[],
+)
+
+----------------------------------------------------------------------------------------------------
+
+QUERY 12:
+i am looking for floor mounted bathtub under 2000$
+
+STATUS: success
+
+RESPONSE:
+filters = models.Filter(
+    must=[
+        models.FieldCondition(
+            key="Product_Category",
+            match=models.MatchValue(value="BATHTUBS & SHOWERS"),
+        ),
+        models.FieldCondition(
+            key="Installation_Type",
+            match=models.MatchValue(value="floor-mounted"),
+        ),
+        models.FieldCondition(
+            key="Price",
+            range=models.Range(lt=2000.0),
+        ),
+    ],
+    should=[],
+    must_not=[],
+)
+
+----------------------------------------------------------------------------------------------------
+
+QUERY 13:
+i am looking for freestanding floor mounted bathtub under 2000$
+
+STATUS: success
+
+RESPONSE:
+filters = models.Filter(
+    must=[
+        models.FieldCondition(
+            key="Product_Category",
+            match=models.MatchValue(value="BATHTUBS & SHOWERS"),
+        ),
+        models.FieldCondition(
+            key="Installation_Type",
+            match=models.MatchValue(value="free-standing"),
+        ),
+        models.FieldCondition(
+            key="Installation_Type",
+            match=models.MatchValue(value="floor-mounted"),
+        ),
+        models.FieldCondition(
+            key="Price",
+            range=models.Range(lt=2000),
+        ),
+    ],
+    should=[],
+    must_not=[],
+)
+
+----------------------------------------------------------------------------------------------------
+
+QUERY 14:
+I am looking for wallmount vanity for modern looking bathroom
+
+STATUS: success
+
+RESPONSE:
+filters = models.Filter(
+    must=[
+        models.FieldCondition(
+            key="Product_Category",
+            match=models.MatchValue(value="BATHROOM VANITIES & SINKS"),
+        ),
+        models.FieldCondition(
+            key="Installation_Type",
+            match=models.MatchValue(value="wall"),
+        ),
+    ],
+    should=[],
+    must_not=[],
+)
+
+----------------------------------------------------------------------------------------------------
+
+QUERY 15:
+I am looking for vanity for modern looking bathroom
+
+STATUS: success
+
+RESPONSE:
+filters = models.Filter(
+    must=[
+        models.FieldCondition(
+            key="Product_Category",
+            match=models.MatchValue(value="BATHROOM VANITIES & SINKS"),
+        ),
+    ],
+    should=[],
+    must_not=[],
+)
+
+----------------------------------------------------------------------------------------------------
+
+QUERY 16:
+I am looking for vanity for modern looking bathroom under 2000$
+
+STATUS: success
+
+RESPONSE:
+filters = models.Filter(
+    must=[
+        models.FieldCondition(
+            key="Product_Category",
+            match=models.MatchValue(value="BATHROOM VANITIES & SINKS"),
+        ),
+        models.FieldCondition(
+            key="Price",
+            range=models.Range(lt=2000),
+        ),
+    ],
+    should=[],
+    must_not=[],
+)
+
+----------------------------------------------------------------------------------------------------
+
+QUERY 17:
+I am looking for vanity for modern looking bathroom under 2000$ of rectangular shape and white color
+
+STATUS: success
+
+RESPONSE:
+filters = models.Filter(
+    must=[
+        models.FieldCondition(
+            key="Product_Category",
+            match=models.MatchValue(value="BATHROOM VANITIES & SINKS"),
+        ),
+        models.FieldCondition(
+            key="Primary_Color",
+            match=models.MatchValue(value="White"),
+        ),
+        models.FieldCondition(
+            key="Price",
+            range=models.Range(lt=2000),
+        ),
+    ],
+    should=[
+        models.FieldCondition(
+            key="Secondary_Color",
+            match=models.MatchValue(value="White"),
+        )
+    ],
+    must_not=[],
+)
+
+----------------------------------------------------------------------------------------------------
+
+QUERY 18:
+can you show me wall light for my bathroom?
+
+STATUS: success
+
+RESPONSE:
+filters = models.Filter(
+    must=[
+        models.FieldCondition(
+            key="Product_Category",
+            match=models.MatchValue(value="LIGHTING"),
+        ),
+        models.FieldCondition(
+            key="Installation_Type",
+            match=models.MatchValue(value="wall"),
+        ),
+    ],
+    should=[],
+    must_not=[],
+)
+
+----------------------------------------------------------------------------------------------------
+
+QUERY 19:
+can you provide me the wall light of matteo brand
+
+STATUS: success
+
+RESPONSE:
+filters = models.Filter(
+    must=[
+        models.FieldCondition(
+            key="Brand",
+            match=models.MatchValue(value="Matteo"),
+        ),
+        models.FieldCondition(
+            key="Product_Category",
+            match=models.MatchValue(value="LIGHTING"),
+        ),
+        models.FieldCondition(
+            key="Installation_Type",
+            match=models.MatchValue(value="wall"),
+        ),
+    ],
+    should=[],
+    must_not=[],
+)
+
+----------------------------------------------------------------------------------------------------
+
+QUERY 20:
+can you provide me the wall light of Modern Forms Luminaires & Forms brand
+
+STATUS: success
+
+RESPONSE:
+filters = models.Filter(
+    must=[
+        models.FieldCondition(
+            key="Brand",
+            match=models.MatchValue(value="Modern Forms Luminaires & Forms"),
+        ),
+        models.FieldCondition(
+            key="Product_Category",
+            match=models.MatchValue(value="LIGHTING"),
+        ),
+        models.FieldCondition(
+            key="Installation_Type",
+            match=models.MatchValue(value="wall"),
+        ),
+    ],
+    should=[],
+    must_not=[],
+)
+
+----------------------------------------------------------------------------------------------------
+
+QUERY 21:
+can you provide me best shower kit?
+
+STATUS: success
+
+RESPONSE:
+filters = models.Filter(
+    must=[
+        models.FieldCondition(
+            key="Product_Category",
+            match=models.MatchValue(value="BATHTUBS & SHOWERS"),
+        ),
+    ],
+    should=[],
+    must_not=[],
+)
+
+----------------------------------------------------------------------------------------------------
+
+QUERY 22:
+can you provide best two piece toilet?
+
+STATUS: success
+
+RESPONSE:
+filters = models.Filter(
+    must=[
+        models.FieldCondition(
+            key="Product_Category",
+            match=models.MatchValue(value="TOILETS & BIDETS"),
+        ),
+    ],
+    should=[],
+    must_not=[],
+)
+
+----------------------------------------------------------------------------------------------------
+
+QUERY 23:
+can you provide best one piece or two piece toilet?
+
+STATUS: success
+
+RESPONSE:
+filters = models.Filter(
+    must=[
+        models.FieldCondition(
+            key="Product_Category",
+            match=models.MatchValue(value="TOILETS & BIDETS"),
+        ),
+    ],
+    should=[],
+    must_not=[],
+)
+
+----------------------------------------------------------------------------------------------------
+
+QUERY 24:
+black matte tap for kitchen not wall-mounted
+
+STATUS: success
+
+RESPONSE:
+filters = models.Filter(
+    must=[
+        models.FieldCondition(
+            key="Product_Category",
+            match=models.MatchValue(value="KITCHEN FAUCETS & SINKS"),
+        ),
+        models.FieldCondition(
+            key="Primary_Color",
+            match=models.MatchValue(value="Black"),
+        ),
+    ],
+    should=[
+        models.FieldCondition(
+            key="Secondary_Color",
+            match=models.MatchValue(value="Matte Black"),
+        )
+    ],
+    must_not=[
+        models.FieldCondition(
+            key="Installation_Type",
+            match=models.MatchValue(value="wall"),
+        ),
+    ],
+)
+
+----------------------------------------------------------------------------------------------------
+
+QUERY 25:
+I am looking for a toilet for my grandmother having arthritis
+
+STATUS: success
+
+RESPONSE:
+filters = models.Filter(
+    must=[
+        models.FieldCondition(
+            key="Product_Category",
+            match=models.MatchValue(value="TOILETS & BIDETS"),
+        ),
+    ],
+    should=[],
+    must_not=[],
+)
+
+----------------------------------------------------------------------------------------------------
+
+QUERY 26:
+Show me a kitchen faucet with a pull down sprayer
+
+STATUS: success
+
+RESPONSE:
+filters = models.Filter(
+    must=[
+        models.FieldCondition(
+            key="Product_Category",
+            match=models.MatchValue(value="KITCHEN FAUCETS & SINKS"),
+        ),
+    ],
+    should=[],
+    must_not=[],
+)
+
+----------------------------------------------------------------------------------------------------
+
+QUERY 27:
+Show me matte black faucets for kitchen
+
+STATUS: success
+
+RESPONSE:
+filters = models.Filter(
+    must=[
+        models.FieldCondition(
+            key="Product_Category",
+            match=models.MatchValue(value="KITCHEN FAUCETS & SINKS"),
+        ),
+        models.FieldCondition(
+            key="Primary_Color",
+            match=models.MatchValue(value="Black"),
+        ),
+    ],
+    should=[
+        models.FieldCondition(
+            key="Secondary_Color",
+            match=models.MatchValue(value="Matte Black"),
+        )
+    ],
+    must_not=[],
+)
+
+----------------------------------------------------------------------------------------------------
+
+QUERY 28:
+I want a vanity faucet with single-handle operation.
+
+STATUS: success
+
+RESPONSE:
+filters = models.Filter(
+    must=[
+        models.FieldCondition(
+            key="Product_Category",
+            match=models.MatchValue(value="BATHROOM FAUCETS"),
+        ),
+    ],
+    should=[],
+    must_not=[],
+)
+
+----------------------------------------------------------------------------------------------------
+
+QUERY 29:
+Find two-piece toilets suitable for small bathrooms.
+
+STATUS: success
+
+RESPONSE:
+filters = models.Filter(
+    must=[
+        models.FieldCondition(
+            key="Product_Category",
+            match=models.MatchValue(value="TOILETS & BIDETS"),
+        ),
+    ],
+    should=[],
+    must_not=[],
+)
+
+----------------------------------------------------------------------------------------------------
+
+QUERY 30:
+Find bathtub faucets with a hand shower attachment.
+
+STATUS: success
+
+RESPONSE:
+filters = models.Filter(
+    must=[
+        models.FieldCondition(
+            key="Product_Category",
+            match=models.MatchValue(value="BATHROOM FAUCETS"),
+        ),
+    ],
+    should=[],
+    must_not=[],
+)
+
+----------------------------------------------------------------------------------------------------
+
+QUERY 31:
+Show showers with sliding glass doors.
+
+STATUS: success
+
+RESPONSE:
+filters = models.Filter(
+    must=[
+        models.FieldCondition(
+            key="Product_Category",
+            match=models.MatchValue(value="BATHTUBS & SHOWERS"),
+        ),
+    ],
+    should=[],
+    must_not=[],
+)
+
+----------------------------------------------------------------------------------------------------
+
+QUERY 32:
+Show alcove bathtubs with built-in overflow protection.
+
+STATUS: success
+
+RESPONSE:
+filters = models.Filter(
+    must=[
+        models.FieldCondition(
+            key="Product_Category",
+            match=models.MatchValue(value="BATHTUBS & SHOWERS"),
+        ),
+    ],
+    should=[],
+    must_not=[],
+)
+
+----------------------------------------------------------------------------------------------------
+
+QUERY 33:
+Find shower heads with adjustable spray patterns.
+
+STATUS: success
+
+RESPONSE:
+filters = models.Filter(
+    must=[
+        models.FieldCondition(
+            key="Product_Category",
+            match=models.MatchValue(value="BATHTUBS & SHOWERS"),
+        ),
+    ],
+    should=[],
+    must_not=[],
+)
+
+----------------------------------------------------------------------------------------------------
+
+QUERY 34:
+Find floor mount vanities with storage cabinets.
+
+STATUS: success
+
+RESPONSE:
+filters = models.Filter(
+    must=[
+        models.FieldCondition(
+            key="Product_Category",
+            match=models.MatchValue(value="BATHROOM VANITIES & SINKS"),
+        ),
+        models.FieldCondition(
+            key="Installation_Type",
+            match=models.MatchValue(value="floor-mounted"),
+        ),
+    ],
+    should=[],
+    must_not=[],
+)
+
+----------------------------------------------------------------------------------------------------
+
+QUERY 35:
+I want bathroom mirrors with LED lighting.
+
+STATUS: success
+
+RESPONSE:
+filters = models.Filter(
+    must=[
+        models.FieldCondition(
+            key="Product_Category",
+            match=models.MatchValue(value="BATHROOM ACCESSORIES"),
+        ),
+    ],
+    should=[],
+    must_not=[],
+)
+
+----------------------------------------------------------------------------------------------------
+
+QUERY 36:
+Show medicine cabinets with anti-fog mirrors.
+
+STATUS: success
+
+RESPONSE:
+filters = models.Filter(
+    must=[
+        models.FieldCondition(
+            key="Product_Category",
+            match=models.MatchValue(value="BATHROOM ACCESSORIES"),
+        ),
+    ],
+    should=[],
+    must_not=[],
+)
+
+----------------------------------------------------------------------------------------------------
+
+QUERY 37:
+I want headphones with noise-cancellation.
+
+STATUS: success
+
+RESPONSE:
+filters = models.Filter(
+    must=[
+        models.FieldCondition(
+            key="Product_Category",
+            match=models.MatchValue(value="HEADPHONES"),
+        ),
+    ],
+    should=[],
+    must_not=[],
+)
+
+----------------------------------------------------------------------------------------------------
+
+QUERY 38:
+Show wall light fixtures for living rooms.
+
+STATUS: success
+
+RESPONSE:
+filters = models.Filter(
+    must=[
+        models.FieldCondition(
+            key="Product_Category",
+            match=models.MatchValue(value="LIGHTING"),
+        ),
+        models.FieldCondition(
+            key="Installation_Type",
+            match=models.MatchValue(value="wall"),
+        ),
+    ],
+    should=[],
+    must_not=[],
+)
+
+----------------------------------------------------------------------------------------------------
+
+QUERY 39:
+can you provide me the white faucet with black handle
+
+STATUS: success
+
+RESPONSE:
+filters = models.Filter(
+    must=[
+        models.FieldCondition(
+            key="Product_Category",
+            match=models.MatchValue(value="BATHROOM FAUCETS"),
+        ),
+        models.FieldCondition(
+            key="Primary_Color",
+            match=models.MatchValue(value="White"),
+        ),
+    ],
+    should=[
+        models.FieldCondition(
+            key="Secondary_Color",
+            match=models.MatchValue(value="White"),
+        )
+    ],
+    must_not=[],
+)
+
+----------------------------------------------------------------------------------------------------
+
+QUERY 40:
+Can you show me bathtub which is not white color and it should not be freestanding
+
+STATUS: success
+
+RESPONSE:
+filters = models.Filter(
+    must=[
+        models.FieldCondition(
+            key="Product_Category",
+            match=models.MatchValue(value="BATHTUBS & SHOWERS"),
+        ),
+    ],
+    should=[],
+    must_not=[
+        models.FieldCondition(
+            key="Primary_Color",
+            match=models.MatchValue(value="White"),
+        ),
+        models.FieldCondition(
+            key="Installation_Type",
+            match=models.MatchValue(value="free-standing"),
+        ),
+    ],
+)
+
+----------------------------------------------------------------------------------------------------

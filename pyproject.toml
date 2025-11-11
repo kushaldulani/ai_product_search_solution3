@@ -1,0 +1,23 @@
+[project]
+name = "agents"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.121.1",
+    "langchain>=1.0.5",
+    "langchain-google-genai>=3.0.1",
+    "langchain-groq>=1.0.0",
+    "langchain-openai>=1.0.2",
+    "langgraph>=1.0.2",
+    "ollama>=0.6.0",
+    "open-clip-torch>=3.2.0",
+    "pillow>=12.0.0",
+    "psycopg2-binary>=2.9.11",
+    "pydantic>=2.12.4",
+    "python-dotenv>=1.2.1",
+    "python-multipart>=0.0.20",
+    "qdrant-client>=1.15.1",
+    "uvicorn>=0.38.0",
+]
