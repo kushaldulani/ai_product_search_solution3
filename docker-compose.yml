@@ -1,7 +1,7 @@
 services:
   qdrant:
     image: qdrant/qdrant:latest
-    container_name: qdrant
+    container_name: qdrant_moxi
     ports:
       - "6336:6333"  # REST API
       - "6337:6334"  # gRPC API
