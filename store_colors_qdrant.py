@@ -108,14 +108,14 @@ def search_colors(query: str, limit: int = 10) -> List[Dict]:
 def main():
     """Main function to store colors."""
     # # Create collection
-    # create_collection()
+    create_collection()
 
-    # # Load colors from file
-    # colors = load_colors_from_file("data/colors.txt")
-    # print(f"Loaded {len(colors)} colors from colors.txt\n")
+    # Load colors from file
+    colors = load_colors_from_file("data/colors.txt")
+    print(f"Loaded {len(colors)} colors from colors.txt\n")
 
-    # # Store colors
-    # store_colors(colors)
+    # Store colors
+    store_colors(colors)
 
     # Example similarity search
     print("\n" + "="*50)

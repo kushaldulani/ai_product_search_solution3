@@ -23,7 +23,7 @@ services:
     ports:
       - 9200:9200
     volumes:
-      - ./opensearch-data:/usr/share/opensearch/data
+      - ./opensearch_data:/usr/share/opensearch/data
 
 volumes:
   qdrant_storage:

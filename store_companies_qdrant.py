@@ -112,14 +112,14 @@ def search_companies(query: str, limit: int = 10) -> List[Dict]:
 def main():
     """Main function to store companies."""
     # # Create collection
-    # create_collection()
+    create_collection()
 
-    # # # Load companies
-    # companies = load_companies("companies.txt")
-    # print(f"Loaded {len(companies)} companies from file.")
+    # # Load companies
+    companies = load_companies("data/companies.txt")
+    print(f"Loaded {len(companies)} companies from file.")
 
-    # # # Store companies
-    # store_companies(companies)
+    # # Store companies
+    store_companies(companies)
 
     # Example similarity search
     print("\n" + "="*50)
