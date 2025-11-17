@@ -5,6 +5,7 @@ from guardrails import check_guardrails
 from extract_filters import exract_filters_from_user_query
 from qdrant_search import ProductSearch
 from qdrant_client import models
+from language_detect import detect_and_translate
 
 
 class AgentState(TypedDict):
@@ -14,6 +15,39 @@ class AgentState(TypedDict):
     error_message: Optional[str]
     filters: Optional[str]
     search_results: Optional[List[str]]
+    detected_language: Optional[str]
+    translated_query: Optional[str]
+
+
+def detect_language(state: AgentState) -> AgentState:
+    """Detect language and translate if non-English."""
+    user_query = state["user_query"]
+
+    # Skip language detection if no text query or if image-only
+    if not user_query or not user_query.strip():
+        state["detected_language"] = None
+        state["translated_query"] = None
+        return state
+
+    try:
+        result = detect_and_translate(user_query)
+        print(result.detected_language, result.is_english, result.translated_text)
+        state["detected_language"] = result.detected_language
+
+        # If non-English, use translated text for the rest of the pipeline
+        if not result.is_english and result.translated_text != "N/A":
+            state["translated_query"] = result.translated_text
+            # Update user_query with translated text for downstream processing
+            state["user_query"] = result.translated_text
+        else:
+            state["translated_query"] = user_query
+
+    except Exception as e:
+        print(f"Language detection error: {e}")
+        state["detected_language"] = "Unknown"
+        state["translated_query"] = user_query
+
+    return state
 
 
 def verify_guardrails(state: AgentState) -> AgentState:
@@ -134,10 +168,14 @@ def route_after_guardrails(state: AgentState) -> str:
 
 # Build graph
 graph = StateGraph(AgentState)
+graph.add_node("detect_language", detect_language)
 graph.add_node("verify_guardrails", verify_guardrails)
 graph.add_node("extract_filters", extract_filters)
 graph.add_node("perform_search", perform_search)
-graph.add_edge(START, "verify_guardrails")
+
+
+graph.add_edge(START, "detect_language")
+graph.add_edge("detect_language", "verify_guardrails")
 graph.add_conditional_edges(
     "verify_guardrails",
     route_after_guardrails,
