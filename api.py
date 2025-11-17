@@ -1,13 +1,21 @@
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from typing import Optional, List, Union
 import base64
 import psycopg2
 import psycopg2.extras
 import os
+import time
 from dotenv import load_dotenv
 from graph import app as langgraph_app
+from stt import (
+    STTModel,
+    transcribe_with_deepgram,
+    transcribe_with_groq_whisper,
+    translate_to_english
+)
 
 load_dotenv()
 
@@ -359,6 +367,96 @@ async def aisearch(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@api.post("/transcribe")
+async def transcribe(
+    audio_file: UploadFile = File(..., description="Audio file in any language"),
+    model: STTModel = Form("groq", description="STT model to use: 'deepgram' or 'groq'"),
+    translate: bool = Form(False, description="Translate to English")
+):
+    """
+    Transcribe audio with optional translation to English
+
+    Parameters:
+    - audio_file: Audio file (mp3, wav, m4a, etc.)
+    - model: STT model - "deepgram" or "groq" (default)
+    - translate: Whether to translate to English (default: False)
+
+    Features:
+    - Multiple STT models (Deepgram Nova-2, Groq Whisper Large v3)
+    - Auto-detects input language
+    - Smart translation (skips if already English)
+    - Returns transcription + optional translation
+    """
+    start_time = time.time()
+
+    try:
+        # Read audio file
+        audio_bytes = await audio_file.read()
+        filename = audio_file.filename or "audio.mp3"
+
+        # Step 1: Transcribe based on selected model
+        transcribe_start = time.time()
+
+        if model == "groq":
+            result = transcribe_with_groq_whisper(audio_bytes, filename)
+        else:  # deepgram (default)
+            result = transcribe_with_deepgram(audio_bytes)
+
+        transcribe_time = time.time() - transcribe_start
+
+        transcript = result["transcript"]
+        detected_language = result["detected_language"]
+        confidence = result["confidence"]
+
+        if not transcript:
+            raise HTTPException(status_code=400, detail="No speech detected in audio")
+
+        # Step 2: Translate to English (if requested and not already English)
+        english_translation = None
+        detected_language_by_llm = None
+        translate_time = 0.0
+
+        if translate:
+            if detected_language and detected_language.lower() in ['en', 'en-us', 'en-gb', 'english']:
+                # Already English - no translation needed
+                english_translation = transcript
+                detected_language_by_llm = "English"
+            else:
+                # Translate to English using LLM
+                translate_start = time.time()
+                translation_result = translate_to_english(transcript)
+                translate_time = time.time() - translate_start
+                english_translation = translation_result.translated_text
+                detected_language_by_llm = translation_result.detected_language
+
+        total_time = time.time() - start_time
+
+        response_data = {
+            "success": True,
+            "model_used": model,
+            "transcript": transcript,
+            "detected_language": detected_language,
+            "confidence": confidence,
+            "processing_time": {
+                "transcription": f"{transcribe_time:.2f}s",
+                "translation": f"{translate_time:.2f}s" if translate else None,
+                "total": f"{total_time:.2f}s"
+            }
+        }
+
+        # Add translation fields only if requested
+        if translate:
+            response_data["english_translation"] = english_translation
+            response_data["detected_language_by_llm"] = detected_language_by_llm
+
+        return JSONResponse(content=response_data)
+
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error processing audio: {str(e)}")
 
 
 if __name__ == "__main__":
