@@ -7,7 +7,7 @@ services:
       - "6337:6334"  # gRPC API
     volumes:
       # - ./qdrant/storage:/qdrant/storage
-      - ./qdrant_storage:/qdrant/storage #<- products data
+      - ./qdrant_storage_new:/qdrant/storage #<- products data
       - ./qdrant/snapshots:/qdrant/snapshots
     environment:
       - QDRANT__SERVICE__HTTP_PORT=6336
@@ -26,5 +26,5 @@ services:
       - ./opensearch_data:/usr/share/opensearch/data
 
 volumes:
-  qdrant_storage:
+  qdrant_storage_new:
   opensearch-data:
