@@ -16,6 +16,11 @@ from stt import (
     transcribe_with_groq_whisper,
     translate_to_english
 )
+from autocomplete import (
+    search_autocomplete,
+    check_opensearch_health,
+    AutocompleteResponse
+)
 
 load_dotenv()
 
@@ -170,12 +175,14 @@ async def root():
 @api.get("/health")
 async def health_check():
     """Detailed health check"""
+    opensearch_health = check_opensearch_health()
     return {
         "status": "healthy",
         "services": {
             "api": "running",
             "langgraph": "running",
-            "qdrant": "connected"
+            "qdrant": "connected",
+            "opensearch": opensearch_health.get("status", "unknown")
         }
     }
 
@@ -457,6 +464,41 @@ async def transcribe(
         raise he
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing audio: {str(e)}")
+
+
+@api.get("/autocomplete", response_model=AutocompleteResponse)
+async def autocomplete(
+    query: str,
+    fuzzy: bool = True,
+    size: int = 10
+):
+    """
+    Autocomplete endpoint with fuzzy search
+
+    Parameters:
+    - query: Search query string (required, min length 1)
+    - fuzzy: Enable fuzzy matching (default: True)
+    - size: Number of results to return (default: 10, max: 100)
+
+    Returns:
+    - query: Original search query
+    - total: Total number of matches
+    - suggestions: List of matching product titles
+    """
+    if not query or len(query.strip()) < 1:
+        raise HTTPException(status_code=400, detail="Query must be at least 1 character")
+
+    if size < 1 or size > 100:
+        raise HTTPException(status_code=400, detail="Size must be between 1 and 100")
+
+    try:
+        result = search_autocomplete(query=query, fuzzy=fuzzy, size=size)
+        return result
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Autocomplete error: {str(e)}")
 
 
 if __name__ == "__main__":
