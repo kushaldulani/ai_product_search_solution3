@@ -23,7 +23,7 @@ load_dotenv()
 OPENSEARCH_HOST = os.getenv("OPENSEARCH_HOST", "localhost")
 OPENSEARCH_PORT = int(os.getenv("OPENSEARCH_PORT", "9200"))
 INDEX_NAME = os.getenv("OPENSEARCH_INDEX", "products")
-DATA_FILE = "data/product_titles.txt"
+DATA_FILE = "./data/product_titles.txt"
 
 # Initialize OpenSearch client
 client = OpenSearch(
