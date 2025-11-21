@@ -21,6 +21,7 @@ from autocomplete import (
     check_opensearch_health,
     AutocompleteResponse
 )
+from query_suggestions import generate_query_suggestions
 
 load_dotenv()
 
@@ -337,8 +338,18 @@ async def aisearch(
             "search_results": None
         })
 
+        # Generate query suggestions if text query exists
+        suggestion_searches = []
+        if user_query:
+            try:
+                suggestions_result = generate_query_suggestions(user_query)
+                suggestion_searches = suggestions_result.suggestions
+            except Exception as e:
+                print(f"Error generating suggestions: {e}")
+
         empty_data = {
             "products": [],
+            "suggestion_searches": [],
             "suggested_products": [],
             "suggested_products_pagination": {
                 "page": 1,
@@ -353,13 +364,14 @@ async def aisearch(
 
         sku_ids = result.get("search_results", [])
         if not sku_ids:
-            return {"success": True, "data": empty_data}
+            return {"success": True, "data": {**empty_data, "suggestion_searches": suggestion_searches}}
 
         products = get_products_by_skus(sku_ids)
         return {
             "success": True,
             "data": {
                 "products": products,
+                "suggestion_searches": suggestion_searches,
                 "suggested_products": [],
                 "suggested_products_pagination": {
                     "page": 1,
