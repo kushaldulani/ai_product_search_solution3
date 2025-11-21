@@ -209,3 +209,4 @@ __marimo__/
 # Docker volumes - persistent data
 qdrant_storage/
 opensearch_data/
+qdrant_storage_1/
