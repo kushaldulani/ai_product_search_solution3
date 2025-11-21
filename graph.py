@@ -6,6 +6,7 @@ from extract_filters import exract_filters_from_user_query
 from qdrant_search import ProductSearch
 from qdrant_client import models
 from language_detect import detect_and_translate
+from multi_query_detector import detect_multiple_queries
 
 
 class AgentState(TypedDict):
@@ -17,6 +18,38 @@ class AgentState(TypedDict):
     search_results: Optional[List[str]]
     detected_language: Optional[str]
     translated_query: Optional[str]
+    has_multiple_queries: bool
+    query_count: int
+    queries: Optional[List[str]]
+    all_sku_results: Optional[List[str]]
+
+
+def detect_multi_query(state: AgentState) -> AgentState:
+    """Detect if user input contains multiple queries."""
+    user_query = state["user_query"]
+
+    # Skip multi-query detection if no text query or if image-only
+    if not user_query or not user_query.strip():
+        state["has_multiple_queries"] = False
+        state["query_count"] = 0
+        state["queries"] = []
+        return state
+
+    try:
+        result = detect_multiple_queries(user_query)
+        state["has_multiple_queries"] = result.has_multiple_queries
+        state["query_count"] = result.query_count
+        state["queries"] = result.queries
+        print(f"Multi-query detection: {result.query_count} queries found")
+        for i, q in enumerate(result.queries, 1):
+            print(f"  Query {i}: {q}")
+    except Exception as e:
+        print(f"Multi-query detection error: {e}")
+        state["has_multiple_queries"] = False
+        state["query_count"] = 1
+        state["queries"] = [user_query]
+
+    return state
 
 
 def detect_language(state: AgentState) -> AgentState:
@@ -78,84 +111,120 @@ def verify_guardrails(state: AgentState) -> AgentState:
     return state
 
 
-def extract_filters(state: AgentState) -> AgentState:
-    """Extract filters from text query."""
-    user_query = state["user_query"]
-
-    if user_query and user_query.strip():
-        try:
-            state["filters"] = exract_filters_from_user_query(user_query)
-        except Exception as e:
-            print(f"Filter extraction error: {e}")
-            state["filters"] = None
-    else:
-        state["filters"] = None
-
-    return state
 
 
 def perform_search(state: AgentState) -> AgentState:
-    """Execute product search with optional filters."""
-    user_query = state["user_query"]
+    """Execute product search - handles both single and multiple queries."""
+    has_multiple_queries = state.get("has_multiple_queries", False)
+    queries = state.get("queries", [])
     image_base64 = state.get("image_base64")
-    filters_str = state.get("filters")
+    user_query = state["user_query"]
 
     try:
         search = ProductSearch()
-        qdrant_filters = None
 
-        # Parse filter string to Qdrant Filter object
-        if filters_str and filters_str.strip():
-            try:
-                # Clean markdown code blocks
-                clean = filters_str.strip()
-                if clean.startswith("```python"):
-                    clean = clean[10:].strip()
-                elif clean.startswith("```"):
-                    clean = clean[3:].strip()
-                if clean.endswith("```"):
-                    clean = clean[:-3].strip()
+        # Determine which queries to process
+        queries_to_process = queries if (has_multiple_queries and len(queries) > 1) else [user_query]
 
-                # Execute filter code (LLM generates without assignment)
-                scope = {"models": models}
-                exec(f"filters = {clean}", scope)
-                qdrant_filters = scope.get("filters")
-            except Exception as e:
-                print(f"Filter parsing error: {e}")
+        print(f"Processing {len(queries_to_process)} query/queries...")
 
-        # Perform search based on input type
-        if image_base64 and user_query:
-            # Image similarity + text filters
-            results = search.search_by_image_base64(
-                base64_image=image_base64,
-                limit=100,
-                filters=qdrant_filters
-            )
-        elif image_base64:
-            # Image similarity only
-            results = search.search_by_image_base64(
-                base64_image=image_base64,
-                limit=100,
-                filters=None
-            )
+        # Store results per query
+        query_results = []
+
+        # Loop through each query
+        for idx, query in enumerate(queries_to_process, 1):
+            if len(queries_to_process) > 1:
+                print(f"  Query {idx}/{len(queries_to_process)}: {query}")
+
+            qdrant_filters = None
+
+            # Extract filters for this specific query
+            if query and query.strip():
+                try:
+                    filters_str = exract_filters_from_user_query(query)
+
+                    # Parse filter string to Qdrant Filter object
+                    if filters_str and filters_str.strip():
+                        # Clean markdown code blocks
+                        clean = filters_str.strip()
+                        if clean.startswith("```python"):
+                            clean = clean[10:].strip()
+                        elif clean.startswith("```"):
+                            clean = clean[3:].strip()
+                        if clean.endswith("```"):
+                            clean = clean[:-3].strip()
+
+                        # Execute filter code (LLM generates without assignment)
+                        scope = {"models": models}
+                        exec(f"filters = {clean}", scope)
+                        qdrant_filters = scope.get("filters")
+                except Exception as e:
+                    print(f"    Filter extraction/parsing error: {e}")
+
+            # Perform search based on input type
+            if image_base64 and query:
+                # Image similarity + text filters
+                results = search.search_by_image_base64(
+                    base64_image=image_base64,
+                    limit=100,
+                    filters=qdrant_filters
+                )
+            elif image_base64:
+                # Image similarity only
+                results = search.search_by_image_base64(
+                    base64_image=image_base64,
+                    limit=100,
+                    filters=None
+                )
+            else:
+                # Text similarity + filters
+                results = search.search_by_text(
+                    query_text=query,
+                    limit=100,
+                    filters=qdrant_filters
+                )
+
+            # Extract SKU IDs from this query's results
+            skus = [
+                r.get("payload", {}).get("SKU") or r.get("payload", {}).get("sku")
+                for r in results
+                if isinstance(r, dict) and (r.get("payload", {}).get("SKU") or r.get("payload", {}).get("sku"))
+            ]
+
+            if len(queries_to_process) > 1:
+                print(f"    Found {len(skus)} SKUs")
+
+            query_results.append(skus)
+
+        # Interleave results if multiple queries (for better UX in pagination)
+        if len(queries_to_process) > 1:
+            all_skus = []
+            max_len = max(len(skus) for skus in query_results)
+            for i in range(max_len):
+                for skus in query_results:
+                    if i < len(skus):
+                        all_skus.append(skus[i])
         else:
-            # Text similarity + filters
-            results = search.search_by_text(
-                query_text=user_query,
-                limit=100,
-                filters=qdrant_filters
-            )
+            all_skus = query_results[0] if query_results else []
 
-        # Extract SKU IDs
-        state["search_results"] = [
-            r.get("payload", {}).get("SKU") or r.get("payload", {}).get("sku")
-            for r in results
-            if isinstance(r, dict) and (r.get("payload", {}).get("SKU") or r.get("payload", {}).get("sku"))
-        ]
+        # Remove duplicates while preserving order
+        seen = set()
+        unique_skus = []
+        for sku in all_skus:
+            if sku not in seen:
+                seen.add(sku)
+                unique_skus.append(sku)
+
+        state["search_results"] = unique_skus
+        state["all_sku_results"] = unique_skus
+
+        if len(queries_to_process) > 1:
+            print(f"Total unique SKUs found: {len(unique_skus)}")
 
     except Exception as e:
         print(f"Search error: {e}")
         state["search_results"] = []
+        state["all_sku_results"] = []
         state["error_message"] = f"Search error: {str(e)}"
 
     return state
@@ -163,14 +232,14 @@ def perform_search(state: AgentState) -> AgentState:
 
 def route_after_guardrails(state: AgentState) -> str:
     """Route based on guardrails result."""
-    return "extract_filters" if state["guardrails_passed"] else END
+    return "detect_multi_query" if state["guardrails_passed"] else END
 
 
 # Build graph
 graph = StateGraph(AgentState)
 graph.add_node("detect_language", detect_language)
 graph.add_node("verify_guardrails", verify_guardrails)
-graph.add_node("extract_filters", extract_filters)
+graph.add_node("detect_multi_query", detect_multi_query)
 graph.add_node("perform_search", perform_search)
 
 
@@ -179,9 +248,9 @@ graph.add_edge("detect_language", "verify_guardrails")
 graph.add_conditional_edges(
     "verify_guardrails",
     route_after_guardrails,
-    {"extract_filters": "extract_filters", END: END}
+    {"detect_multi_query": "detect_multi_query", END: END}
 )
-graph.add_edge("extract_filters", "perform_search")
+graph.add_edge("detect_multi_query", "perform_search")
 graph.add_edge("perform_search", END)
 
 app = graph.compile()
