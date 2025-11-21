@@ -515,4 +515,4 @@ async def autocomplete(
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(api, host="0.0.0.0", port=8001)
+    uvicorn.run(api, host="0.0.0.0", port=8000)
