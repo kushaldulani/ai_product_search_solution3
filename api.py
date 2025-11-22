@@ -22,6 +22,7 @@ from autocomplete import (
     AutocompleteResponse
 )
 from query_suggestions import generate_query_suggestions
+from canoon_filter_extractor import extract_filters, filters_to_dict
 
 load_dotenv()
 
@@ -513,6 +514,48 @@ async def autocomplete(
         raise HTTPException(status_code=500, detail=f"Autocomplete error: {str(e)}")
 
 
+@api.post("/extract-plant-filters")
+async def extract_plant_filters(query: str = Form(...)):
+    """
+    Extract plant filters from natural language query
+
+    Parameters:
+    - query: Natural language query (e.g., "I want plants with red flowers in zone 5")
+
+    Returns:
+    - success: Boolean indicating success
+    - filters: Extracted filters as dictionary with display names
+    - query: Original query
+
+    Example Response:
+    {
+      "success": true,
+      "query": "I want plants with red flowers in zone 5",
+      "filters": {
+        "Hardiness Zone": ["5"],
+        "Flower Colour": ["red"]
+      }
+    }
+    """
+    try:
+        if not query or not query.strip():
+            raise HTTPException(status_code=400, detail="Query cannot be empty")
+
+        result = extract_filters(query)
+        filters_dict = filters_to_dict(result)
+
+        return {
+            "success": True,
+            "query": query,
+            "filters": filters_dict
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Filter extraction error: {str(e)}")
+
+
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(api, host="0.0.0.0", port=8000)
+    uvicorn.run(api, host="0.0.0.0", port=8001)
