@@ -132,19 +132,28 @@ def apply_filters_to_data(df: pd.DataFrame, filters: dict) -> pd.DataFrame:
         )
         result_df = result_df[mask]
 
-    # Height filter (less than or equal to specified height in cm)
+    # Height filter - use tolerance range for approximate matching
     if 'Height' in filters:
-        max_height = filters['Height']
+        target_height = filters['Height']
+        # Use ±1% tolerance for height matching to handle rounding differences
+        # This allows 152.4 to match when user specifies 152 or 153
+        tolerance = target_height * 0.01
+        min_height = target_height - tolerance
+        max_height = target_height + tolerance
         mask = result_df['attr_height'].apply(
-            lambda x: float(x) <= max_height if pd.notna(x) else False
+            lambda x: (min_height <= float(x) <= max_height) if pd.notna(x) else False
         )
         result_df = result_df[mask]
 
-    # Spread filter (less than or equal to specified spread in cm)
+    # Spread filter - use tolerance range for approximate matching
     if 'Spread' in filters:
-        max_spread = filters['Spread']
+        target_spread = filters['Spread']
+        # Use ±1% tolerance for spread matching
+        tolerance = target_spread * 0.01
+        min_spread = target_spread - tolerance
+        max_spread = target_spread + tolerance
         mask = result_df['attr_spread_descriptor'].apply(
-            lambda x: float(x) <= max_spread if pd.notna(x) else False
+            lambda x: (min_spread <= float(x) <= max_spread) if pd.notna(x) else False
         )
         result_df = result_df[mask]
 
