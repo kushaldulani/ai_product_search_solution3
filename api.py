@@ -22,7 +22,7 @@ from autocomplete import (
     AutocompleteResponse
 )
 from query_suggestions import generate_query_suggestions
-from canoon_filter_extractor import extract_filters, filters_to_dict
+from plant_search import search_plants
 
 load_dotenv()
 
@@ -517,15 +517,17 @@ async def autocomplete(
 @api.post("/extract-plant-filters")
 async def extract_plant_filters(query: str = Form(...)):
     """
-    Extract plant filters from natural language query
+    Extract plant filters from natural language query and return matching SKU IDs
 
     Parameters:
     - query: Natural language query (e.g., "I want plants with red flowers in zone 5")
 
     Returns:
     - success: Boolean indicating success
-    - filters: Extracted filters as dictionary with display names
     - query: Original query
+    - filters: Extracted filters as dictionary with display names
+    - sku_ids: List of matching SKU IDs
+    - count: Number of matching plants
 
     Example Response:
     {
@@ -534,28 +536,31 @@ async def extract_plant_filters(query: str = Form(...)):
       "filters": {
         "Hardiness Zone": ["5"],
         "Flower Colour": ["red"]
-      }
+      },
+      "sku_ids": ["SKU001", "SKU002", "SKU003"],
+      "count": 3
     }
     """
     try:
         if not query or not query.strip():
             raise HTTPException(status_code=400, detail="Query cannot be empty")
 
-        result = extract_filters(query)
-        filters_dict = filters_to_dict(result)
+        filters_dict, sku_ids = search_plants(query)
 
         return {
             "success": True,
             "query": query,
-            "filters": filters_dict
+            "filters": filters_dict,
+            "sku_ids": sku_ids,
+            "count": len(sku_ids)
         }
 
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Filter extraction error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Plant search error: {str(e)}")
 
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(api, host="0.0.0.0", port=8000)
+    uvicorn.run(api, host="0.0.0.0", port=8001)
