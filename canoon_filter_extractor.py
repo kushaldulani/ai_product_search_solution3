@@ -64,6 +64,11 @@ class PlantFilterOutput(BaseModel):
         description="Spread/width in centimeters. For ranges like 'between 30-50cm wide', use the maximum value. Examples: 60.0, 150.0, None",
         alias="Spread"
     )
+    category: Optional[List[str]] = Field(
+        default=None,
+        description="Plant category from: 'broadleafs', 'fruits', 'grasses', 'groundcovers', 'houseplants', 'perennials', 'roses', 'shrubs', 'trees', 'tropicals', 'vines'. Can have multiple values. Examples: ['trees'], ['shrubs', 'trees'], ['grasses'], None",
+        alias="Category"
+    )
 
     class Config:
         populate_by_name = True
@@ -96,6 +101,7 @@ Available filters and their valid values:
 8. **Sun Exposure**: ["full sun", "full sun to partial shade", "full sun to shade", "partial shade", "partial shade to shade", "shade"]
 9. **Height**: Single value in centimeters (100cm = 1 meter, 1 foot = 30.48cm, 1 inch = 2.54cm)
 10. **Spread**: Single value in centimeters
+11. **Category**: ["broadleafs", "fruits", "grasses", "groundcovers", "houseplants", "perennials", "roses", "shrubs", "trees", "tropicals", "vines"]
 
 User Query: {query}
 
@@ -122,6 +128,11 @@ Instructions:
 - For colors, match to closest valid option
 - For sun exposure, match user terms like "sunny" → "full sun", "shady" → "shade"
 - For moisture, match terms like "wet soil" → "moist to wet", "dry conditions" → "dry to average", "average" → "average to moist"
+- For category, detect from:
+  - Direct mentions: "tree", "shrub", "grass", "perennial", "vine", "rose", "groundcover", "houseplant", "tropical", "fruit", "broadleaf"
+  - Plant names containing category words: "Feather Reed Grass" → ["grasses"], "Maple Tree" → ["trees"], "Climbing Rose" → ["roses"]
+  - Plurals: "trees", "shrubs", "grasses", "perennials", "vines", "roses", "groundcovers", "houseplants", "tropicals", "fruits"
+  - Match: "tree/trees" → "trees", "shrub/shrubs" → "shrubs", "grass/grasses" → "grasses", "perennial/perennials" → "perennials", etc.
 - Return your response in JSON format with keys matching the filter names exactly (use spaces and capital letters)
 
 Examples:
@@ -168,6 +179,43 @@ Response: {{
 Query: "Plants with pink or white flowers"
 Response: {{
   "Flower Colour": ["pink", "white"]
+}}
+
+Query: "Show me trees and shrubs for zone 5"
+Response: {{
+  "Category": ["trees", "shrubs"],
+  "Hardiness Zone": ["5"]
+}}
+
+Query: "I want ornamental grasses that are low maintenance"
+Response: {{
+  "Category": ["grasses"],
+  "Low Maintenance": ["true"]
+}}
+
+Query: "Looking for perennials with yellow flowers for full sun"
+Response: {{
+  "Category": ["perennials"],
+  "Flower Colour": ["yellow"],
+  "Sun Exposure": ["full sun"]
+}}
+
+Query: "show me Eldorado Feather Reed Grass"
+Response: {{
+  "Category": ["grasses"]
+}}
+
+Query: "native grasses that grow 3 to 4 feet and tolerate moist soil"
+Response: {{
+  "Category": ["grasses"],
+  "Height": 122,
+  "Soil Moisture": ["moist"]
+}}
+
+Query: "I want Red Maple Tree for zone 5"
+Response: {{
+  "Category": ["trees"],
+  "Hardiness Zone": ["5"]
 }}
 
 Now extract filters from the user query above.
@@ -234,6 +282,11 @@ if __name__ == "__main__":
         "Medium plants between 1-2 feet, yellow or white flowers, dry conditions",
         "Low maintenance plants",
         "Plants with orange or red fall color for zone 4, partial shade",
+        "Show me trees and shrubs for zone 5",
+        "I want ornamental grasses that are low maintenance",
+        "Looking for perennials with yellow flowers for full sun",
+        "Show me roses and vines for partial shade",
+        "I need groundcovers for dry areas",
     ]
 
     print("=" * 90)

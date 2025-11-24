@@ -120,7 +120,7 @@ def apply_filters_to_data(df: pd.DataFrame, filters: dict) -> pd.DataFrame:
     if 'Soil Moisture' in filters:
         filter_moisture = [m.lower() for m in filters['Soil Moisture']]
         mask = result_df['attr_moisture_descriptor'].apply(
-            lambda x: any(fm == str(x).lower() for fm in filter_moisture) if pd.notna(x) else False
+            lambda x: any(fm in str(x).lower() for fm in filter_moisture) if pd.notna(x) else False
         )
         result_df = result_df[mask]
 
@@ -128,7 +128,7 @@ def apply_filters_to_data(df: pd.DataFrame, filters: dict) -> pd.DataFrame:
     if 'Sun Exposure' in filters:
         filter_sun = [s.lower() for s in filters['Sun Exposure']]
         mask = result_df['attr_sunlight_descriptor'].apply(
-            lambda x: any(fs == str(x).lower() for fs in filter_sun) if pd.notna(x) else False
+            lambda x: any(fs in str(x).lower() for fs in filter_sun) if pd.notna(x) else False
         )
         result_df = result_df[mask]
 
@@ -148,10 +148,18 @@ def apply_filters_to_data(df: pd.DataFrame, filters: dict) -> pd.DataFrame:
         )
         result_df = result_df[mask]
 
+    # Category filter
+    if 'Category' in filters:
+        filter_categories = [c.lower() for c in filters['Category']]
+        mask = result_df['sub_category_code'].apply(
+            lambda x: str(x).lower() in filter_categories if pd.notna(x) else False
+        )
+        result_df = result_df[mask]
+
     return result_df
 
 
-def search_plants(query: str, excel_path: str = 'data/data_cleaned.xlsx') -> Tuple[dict, List[str]]:
+def search_plants(query: str, excel_path: str = None) -> Tuple[dict, List[str]]:
     """
     Search for plants based on natural language query
 
@@ -166,11 +174,21 @@ def search_plants(query: str, excel_path: str = 'data/data_cleaned.xlsx') -> Tup
     filter_output = extract_filters(query)
     filters = filters_to_dict(filter_output)
 
+    # Use absolute path if not provided
+    if excel_path is None:
+        import os
+        excel_path = os.path.join(os.path.dirname(__file__), 'data', 'data_cleaned.xlsx')
+
     # Load data
     df = pd.read_excel(excel_path)
 
+    print(f"Loaded {len(df)} plants from database")
+    print(f"Extracted filters: {filters}")
+
     # Apply filters
     filtered_df = apply_filters_to_data(df, filters)
+
+    print(f"After filtering: {len(filtered_df)} plants match")
 
     # Get SKU IDs
     sku_ids = filtered_df['sku'].tolist()
@@ -185,6 +203,9 @@ if __name__ == "__main__":
         "Show me plants with red fall color and yellow flowers",
         "Small evergreen plants under 1 meter",
         "Plants for zone 5, full sun, low maintenance",
+        "Show me trees and shrubs for zone 5",
+        "I want ornamental grasses that are low maintenance",
+        "Looking for perennials with yellow flowers for full sun",
     ]
 
     print("=" * 90)
